@@ -31,6 +31,15 @@ class Database:
                 quantity INTEGER NOT NULL
             )
         ''')
+        cls.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                address TEXT NOT NULL,
+                phone_number TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
         cls.conn.commit()
 
     @classmethod
@@ -215,6 +224,26 @@ class Interface:
     def delete_order(order_id):
         Database.delete_order(order_id)
         print("Заказ успешно удален!")
+
+    @classmethod
+    def add_user(cls, user, address, phone_number):
+        cls.cursor.execute('''
+            INSERT INTO users (username, password, role, full_name)
+            VALUES (?, ?, ?, ?)
+        ''', (user.username, user.password, user.role, user.full_name))
+        cls.conn.commit()
+
+        cls.cursor.execute('''
+            SELECT id FROM users
+            WHERE username = ?
+        ''', (user.username,))
+        user_id = cls.cursor.fetchone()[0]
+
+        cls.cursor.execute('''
+            INSERT INTO customers (user_id, address, phone_number)
+            VALUES (?, ?, ?)
+        ''', (user_id, address, phone_number))
+        cls.conn.commit()
 
     @staticmethod
     def client_interface():
